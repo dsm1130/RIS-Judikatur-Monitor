@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><style>
+:root{--ink:#16232B;--slate:#5C6B72;--rule:#DDD9D2;--signal:#B4650C}
+*{box-sizing:border-box}
+body{width:400px;margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#F7F6F3}
+header{padding:12px 14px;border-bottom:1px solid var(--rule);background:#fff}
+h1{font-size:14px;margin:0;font-weight:600}
+.meta{font-size:11.5px;color:var(--slate);margin-top:3px}
+#liste{max-height:340px;overflow:auto}
+.e{padding:10px 14px;border-bottom:1px solid var(--rule);background:#fff}
+.e a{color:var(--ink);text-decoration:none;font-weight:600;display:block}
+.e a:hover{text-decoration:underline}
+.e .nr{font:11px ui-monospace,Consolas,monospace;color:var(--slate);margin-top:3px;word-break:break-all}
+.leer{padding:26px 14px;text-align:center;color:var(--slate)}
+footer{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--rule);background:#fff}
+button{flex:1;font:600 12.5px "Segoe UI",system-ui,sans-serif;padding:7px 8px;cursor:pointer;
+ border:1px solid #ccc;border-radius:4px;background:#fff;color:var(--ink)}
+button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.fehler{padding:8px 14px;background:#FBE4E4;font-size:12px}
+</style></head><body>
+<header><h1>RIS-Judikatur Monitor</h1><div class="meta" id="meta">wird geladen …</div></header>
+<div id="fehler"></div><div id="liste"></div>
+<footer>
+  <button id="pruefen">Jetzt prüfen</button>
+  <button id="gelesen">Als gelesen</button>
+  <button id="oeffnen">RIS öffnen</button>
+</footer>
+<script src="popup.js"></script></body></html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><title>Einstellungen – RIS-Judikatur Monitor</title><style>
+:root{--ink:#16232B;--slate:#5C6B72;--rule:#DDD9D2;--signal:#B4650C}
+body{font:15px/1.6 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#F7F6F3;max-width:700px;margin:36px auto;padding:0 22px}
+h1{font-size:20px;margin:0 0 6px}
+p.sub{color:var(--slate);margin:0 0 26px;font-size:13.5px}
+fieldset{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:16px 18px;margin:0 0 18px}
+legend{font-weight:600;font-size:13px;padding:0 6px}
+textarea{width:100%;height:110px;font:12px ui-monospace,Consolas,monospace;border:1px solid #ccc;border-radius:4px;padding:8px}
+select{font:14px "Segoe UI",system-ui,sans-serif;padding:5px 8px;border:1px solid #ccc;border-radius:4px}
+button{font:600 13px "Segoe UI",system-ui,sans-serif;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;color:var(--ink);margin-right:8px}
+button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+#status{color:var(--signal);font-size:13px}
+pre{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:12px;font:12px ui-monospace,Consolas,monospace;overflow:auto;max-height:300px}
+small{color:var(--slate);display:block;margin-top:8px}
+</style></head><body>
+<h1>RIS-Judikatur Monitor</h1>
+<p class="sub">Ruft in festem Abstand eine RIS-Abfrage ab und meldet, sobald Entscheidungen auftauchen, die beim letzten Lauf noch nicht dabei waren.</p>
+
+<fieldset><legend>Abfrage</legend>
+  <textarea id="url" spellcheck="false"></textarea>
+  <button id="speichern">Speichern</button>
+  <button id="standard">Standardabfrage einsetzen</button>
+  <small>Die vollständige RIS-Ergebnis-URL. Sie können die Suchworte oder die durchsuchten Anwendungen ändern - dazu die Abfrage im RIS zusammenstellen und die Adresse der Trefferliste hier einfügen. Sortierung absteigend beibehalten, sonst steht die neueste Entscheidung nicht an erster Stelle.</small>
+</fieldset>
+
+<fieldset><legend>Prüfintervall</legend>
+  <select id="intervall">
+    <option value="30">alle 30 Minuten</option>
+    <option value="60">stündlich</option>
+    <option value="180">alle 3 Stunden</option>
+    <option value="360">alle 6 Stunden</option>
+    <option value="720">alle 12 Stunden</option>
+    <option value="1440">täglich</option>
+  </select>
+  <small>Das RIS wird an Werktagen befüllt. Drei Stunden sind ein guter Kompromiss zwischen Aktualität und Zurückhaltung gegenüber dem Dienst.</small>
+</fieldset>
+
+<fieldset><legend>Benachrichtigung</legend>
+  <label><input type="checkbox" id="dauerhaft"> Meldung bleibt stehen, bis sie weggeklickt wird</label>
+</fieldset>
+
+<fieldset><legend>Diagnose</legend>
+  <button id="test">Prüfung starten</button><span id="status"></span>
+  <pre id="ausgabe">noch nicht ausgeführt</pre>
+  <button id="kopieren">Ausgabe kopieren</button>
+  <small>Zeigt HTTP-Status, Zieladresse nach Umleitung, Antwortgröße, erkannte Dokumentnummern sowie – falls nichts gefunden wurde – die ersten Verweise und einen Textauszug der Antwort. Bleibt „gefunden“ bei 0, bitte diese Ausgabe kopieren und übermitteln; daraus lässt sich das Erkennungsmuster genau anpassen.</small>
+</fieldset>
+
+<fieldset><legend>Zurücksetzen</legend>
+  <button id="reset">Bestand löschen</button>
+  <small>Leert die Liste bekannter Dokumente. Der nächste Lauf nimmt den Bestand neu auf, ohne zu melden.</small>
+</fieldset>
+
+<script src="options.js"></script></body></html>

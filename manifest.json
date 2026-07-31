@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "RIS-Judikatur Monitor",
+  "short_name": "RIS-Monitor",
+  "version": "2.1.0",
+  "description": "Beobachtet eine RIS-Gesamtabfrage und meldet, sobald eine neue Entscheidung an erster Stelle steht.",
+  "permissions": ["alarms", "notifications", "storage"],
+  "host_permissions": ["https://www.ris.bka.gv.at/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "RIS-Judikatur Monitor",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
+  },
+  "options_page": "options.html",
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
+}
