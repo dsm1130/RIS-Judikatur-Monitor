@@ -1,10 +1,26 @@
 const el = (id) => document.getElementById(id);
 function melden(t){ el("status").textContent = t; if(t) setTimeout(()=>el("status").textContent="",2500); }
 
-chrome.storage.local.get(["url","intervall","dauerhaft"]).then((s)=>{
+function updateCustomNotifVisibility() {
+  const isCustom = el("notifDauer").value === "custom";
+  el("customNotifWrap").style.display = isCustom ? "flex" : "none";
+}
+
+chrome.storage.local.get(["url","intervall","dauerhaft","notifDauer"]).then((s)=>{
   el("url").value = s.url || "";
   el("intervall").value = String(s.intervall || 180);
   el("dauerhaft").checked = s.dauerhaft !== false;
+
+  const nd = Number(s.notifDauer);
+  if (nd === 30 || nd === 60 || nd === 180) {
+    el("notifDauer").value = String(nd);
+  } else if (nd && nd > 0) {
+    el("notifDauer").value = "custom";
+    el("customSekunden").value = nd;
+  } else {
+    el("notifDauer").value = "60";
+  }
+  updateCustomNotifVisibility();
 });
 
 el("speichern").addEventListener("click", async ()=>{
@@ -23,6 +39,27 @@ el("intervall").addEventListener("change", async ()=>{
 el("dauerhaft").addEventListener("change", async ()=>{
   await chrome.storage.local.set({ dauerhaft: el("dauerhaft").checked }); melden("gespeichert");
 });
+
+async function speichereNotifDauer() {
+  let sek;
+  if (el("notifDauer").value === "custom") {
+    sek = Number(el("customSekunden").value);
+    if (!sek || sek < 5) { melden("Mindestens 5 Sekunden"); return; }
+  } else {
+    sek = Number(el("notifDauer").value);
+  }
+  await chrome.storage.local.set({ notifDauer: sek });
+  melden("gespeichert");
+}
+
+el("notifDauer").addEventListener("change", ()=>{
+  updateCustomNotifVisibility();
+  if (el("notifDauer").value !== "custom") speichereNotifDauer();
+});
+el("customSekunden").addEventListener("change", ()=>{
+  if (el("notifDauer").value === "custom") speichereNotifDauer();
+});
+
 el("test").addEventListener("click", async ()=>{
   melden("läuft \u2026");
   const b = await chrome.runtime.sendMessage({ typ:"JETZT_PRUEFEN" });

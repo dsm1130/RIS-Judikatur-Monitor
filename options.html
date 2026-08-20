@@ -3,19 +3,26 @@
 :root{--ink:#16232B;--slate:#5C6B72;--rule:#DDD9D2;--signal:#B4650C}
 body{font:15px/1.6 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#F7F6F3;max-width:700px;margin:36px auto;padding:0 22px}
 h1{font-size:20px;margin:0 0 6px}
-p.sub{color:var(--slate);margin:0 0 26px;font-size:13.5px}
+p.sub{color:var(--slate);margin:0 0 8px;font-size:13.5px}
+p.credit{color:var(--slate);margin:0 0 26px;font-size:12.5px}
+p.credit a{color:var(--ink);text-decoration:underline}
+p.credit a:hover{color:var(--signal)}
 fieldset{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:16px 18px;margin:0 0 18px}
 legend{font-weight:600;font-size:13px;padding:0 6px}
 textarea{width:100%;height:110px;font:12px ui-monospace,Consolas,monospace;border:1px solid #ccc;border-radius:4px;padding:8px}
-select{font:14px "Segoe UI",system-ui,sans-serif;padding:5px 8px;border:1px solid #ccc;border-radius:4px}
+select,input[type="number"]{font:14px "Segoe UI",system-ui,sans-serif;padding:5px 8px;border:1px solid #ccc;border-radius:4px}
 button{font:600 13px "Segoe UI",system-ui,sans-serif;padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;color:var(--ink);margin-right:8px}
 button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 #status{color:var(--signal);font-size:13px}
 pre{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:12px;font:12px ui-monospace,Consolas,monospace;overflow:auto;max-height:300px}
 small{color:var(--slate);display:block;margin-top:8px}
+.intervall-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.intervall-row label{display:flex;align-items:center;gap:4px;font-size:13.5px}
+#customSekunden{width:70px}
 </style></head><body>
 <h1>RIS-Judikatur Monitor</h1>
 <p class="sub">Ruft in festem Abstand eine RIS-Abfrage ab und meldet, sobald Entscheidungen auftauchen, die beim letzten Lauf noch nicht dabei waren.</p>
+<p class="credit">Kostenlos zur Verfügung gestellt von daten|schutz|mühlböck - <a href="https://dsgvo-fit.co.at" target="_blank" rel="noopener">dsgvo-fit.co.at</a></p>
 
 <fieldset><legend>Abfrage</legend>
   <textarea id="url" spellcheck="false"></textarea>
@@ -38,6 +45,21 @@ small{color:var(--slate);display:block;margin-top:8px}
 
 <fieldset><legend>Benachrichtigung</legend>
   <label><input type="checkbox" id="dauerhaft"> Meldung bleibt stehen, bis sie weggeklickt wird</label>
+  <div style="margin-top:14px">
+    <div style="font-size:13.5px;margin-bottom:6px">Anzeige-Dauer des Benachrichtigungs-Popups (wenn nicht dauerhaft):</div>
+    <div class="intervall-row">
+      <select id="notifDauer">
+        <option value="30">30 Sekunden</option>
+        <option value="60">1 Minute</option>
+        <option value="180">3 Minuten</option>
+        <option value="custom">frei wählbar …</option>
+      </select>
+      <label id="customNotifWrap" style="display:none">
+        <input type="number" id="customSekunden" min="5" step="5" value="60"> Sekunden
+      </label>
+    </div>
+    <small>Wirkt nur, wenn die Option „Meldung bleibt stehen …“ deaktiviert ist. Die Meldung wird nach der gewählten Zeit automatisch geschlossen.</small>
+  </div>
 </fieldset>
 
 <fieldset><legend>Diagnose</legend>

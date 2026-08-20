@@ -2,12 +2,16 @@
 <html lang="de"><head><meta charset="utf-8"><style>
 :root{--ink:#16232B;--slate:#5C6B72;--rule:#DDD9D2;--signal:#B4650C}
 *{box-sizing:border-box}
-body{width:400px;margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#F7F6F3}
+body{width:420px;margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:#F7F6F3}
 header{padding:12px 14px;border-bottom:1px solid var(--rule);background:#fff}
 h1{font-size:14px;margin:0;font-weight:600}
 .meta{font-size:11.5px;color:var(--slate);margin-top:3px}
+#auswahlLeiste{padding:8px 14px;border-bottom:1px solid var(--rule);background:#fff;display:flex;align-items:center;gap:8px;font-size:12.5px}
+#auswahlLeiste label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 #liste{max-height:340px;overflow:auto}
-.e{padding:10px 14px;border-bottom:1px solid var(--rule);background:#fff}
+.e{padding:10px 14px;border-bottom:1px solid var(--rule);background:#fff;display:flex;gap:10px;align-items:flex-start}
+.e input[type="checkbox"]{margin-top:3px;flex-shrink:0}
+.e .inhalt{flex:1;min-width:0}
 .e a{color:var(--ink);text-decoration:none;font-weight:600;display:block}
 .e a:hover{text-decoration:underline}
 .e .nr{font:11px ui-monospace,Consolas,monospace;color:var(--slate);margin-top:3px;word-break:break-all}
@@ -20,10 +24,14 @@ button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .fehler{padding:8px 14px;background:#FBE4E4;font-size:12px}
 </style></head><body>
 <header><h1>RIS-Judikatur Monitor</h1><div class="meta" id="meta">wird geladen …</div></header>
-<div id="fehler"></div><div id="liste"></div>
+<div id="fehler"></div>
+<div id="auswahlLeiste" style="display:none">
+  <label><input type="checkbox" id="alleAuswaehlen"> Alle auswählen</label>
+</div>
+<div id="liste"></div>
 <footer>
   <button id="pruefen">Jetzt prüfen</button>
-  <button id="gelesen">Als gelesen</button>
+  <button id="oeffnenAuswahl">Auswahl öffnen</button>
   <button id="oeffnen">RIS öffnen</button>
 </footer>
 <script src="popup.js"></script></body></html>

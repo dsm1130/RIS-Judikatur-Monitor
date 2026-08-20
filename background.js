@@ -13,13 +13,58 @@ async function badgeSetzen() {
   await chrome.action.setBadgeBackgroundColor({ color: "#B4650C" });
 }
 
-async function alarmSetzen() {
+async function alarmSetzen(forceReset = false) {
   const min = await hole("intervall", STANDARD_INTERVALL);
-  await chrome.alarms.clear("pruefen");
-  chrome.alarms.create("pruefen", { periodInMinutes: min, delayInMinutes: 1 });
+  const existing = await chrome.alarms.get("pruefen");
+  // Nur neu anlegen, wenn keiner existiert oder das Intervall geändert wurde
+  // (forceReset = true bei Intervall-Änderung oder explizitem Reset)
+  if (forceReset || !existing || existing.periodInMinutes !== min) {
+    await chrome.alarms.clear("pruefen");
+    await chrome.alarms.create("pruefen", {
+      periodInMinutes: min,
+      delayInMinutes: 1,
+      persistAcrossSessions: true
+    });
+  }
+}
+
+/** Stellt sicher, dass der periodische Alarm existiert (wichtig nach SW-Neustart). */
+async function ensureAlarm() {
+  const existing = await chrome.alarms.get("pruefen");
+  if (!existing) {
+    await alarmSetzen(true);
+  }
 }
 
 /* ---------- Kern: abrufen, vergleichen, melden ---------- */
+
+/**
+ * Fetch mit Retry. Fängt typische Startup-Fehler ab
+ * („Failed to fetch“, wenn Netzwerk/Cookie-Store nach Browser-Start
+ * noch nicht bereit sind).
+ */
+async function fetchMitRetry(url, versuche = 3) {
+  let letzterFehler = null;
+  for (let i = 0; i < versuche; i++) {
+    try {
+      const antwort = await fetch(url, {
+        credentials: "include",
+        cache: "no-store",
+        redirect: "follow",
+        headers: { "Accept": "text/html,application/xhtml+xml" }
+      });
+      return antwort;
+    } catch (e) {
+      letzterFehler = e;
+      // Kurze Pause vor dem nächsten Versuch (exponentiell, max. ~3–4 s)
+      if (i < versuche - 1) {
+        await new Promise((r) => setTimeout(r, 700 * Math.pow(2, i)));
+      }
+    }
+  }
+  throw letzterFehler;
+}
+
 async function pruefen(diagnose = false) {
   const url = await hole("url", STANDARD_URL);
   const bericht = { zeit: Date.now(), url };
@@ -27,13 +72,9 @@ async function pruefen(diagnose = false) {
   let html = "";
   try {
     // Cookies mitsenden: Ergebnis.wxe ist eine WXE-Anwendung und braucht
-    // in der Regel eine Sitzung, sonst kommt nur das Suchformular zurueck.
-    const antwort = await fetch(url, {
-      credentials: "include",
-      cache: "no-store",
-      redirect: "follow",
-      headers: { "Accept": "text/html,application/xhtml+xml" }
-    });
+    // in der Regel eine Sitzung, sonst kommt nur das Suchformular zurück.
+    // Nach Browser-Neustart kann der erste Fetch scheitern → Retry.
+    const antwort = await fetchMitRetry(url, 3);
     bericht.status = antwort.status;
     bericht.endgueltigeUrl = antwort.url;
     bericht.umgeleitet = antwort.redirected;
@@ -119,37 +160,59 @@ async function melden(neue) {
   const kopf = n === 1 ? "1 neue Entscheidung" : n + " neue Entscheidungen";
   const zeilen = neue.slice(0, 4).map((d) => "\u2022 " + d.titel).join("\n");
   const rest = n > 4 ? "\n\u2026 und " + (n - 4) + " weitere" : "";
-  await chrome.notifications.create("ris-" + Date.now(), {
+  const dauerhaft = await hole("dauerhaft", true);
+  const id = "ris-" + Date.now();
+  await chrome.notifications.create(id, {
     type: "basic",
     iconUrl: chrome.runtime.getURL("icons/128.png"),
     title: "RIS-Judikatur - " + kopf,
     message: zeilen + rest,
     priority: 2,
-    requireInteraction: await hole("dauerhaft", true)
+    requireInteraction: dauerhaft
   });
+  // Wenn nicht dauerhaft: nach konfigurierter Zeit automatisch schließen
+  if (!dauerhaft) {
+    const sek = await hole("notifDauer", 60);
+    // Alarm mit kurzer Verzögerung (chrome.alarms arbeitet in Minuten, daher delayInMinutes)
+    const delayMin = Math.max(sek / 60, 0.05); // mind. ~3 s
+    chrome.alarms.create("notif-clear-" + id, { delayInMinutes: delayMin });
+  }
 }
 
 /* ---------- Ereignisse ---------- */
 chrome.runtime.onInstalled.addListener(async () => {
   if ((await hole("url", null)) === null) await setze({ url: STANDARD_URL });
-  await alarmSetzen();
+  await alarmSetzen(true);
   await badgeSetzen();
-  pruefen();
+  // Kurzer Verzug, damit der Service Worker und das Netzwerk bereit sind
+  chrome.alarms.create("pruefen-startup", { delayInMinutes: 0.25 }); // ~15 s
 });
 
 chrome.runtime.onStartup.addListener(async () => {
-  await alarmSetzen();
+  await alarmSetzen(true);
   await badgeSetzen();
+  // Nach Browser-Neustart nicht sofort prüfen – Netzwerk/Cookies brauchen oft
+  // ein paar Sekunden. Einmaliger Alarm nach ~20 s.
+  chrome.alarms.create("pruefen-startup", { delayInMinutes: 0.35 }); // ~21 s
 });
 
+// Bei jedem Aufwachen des Service Workers den Alarm sicherstellen
+ensureAlarm().catch(() => {});
+
 chrome.alarms.onAlarm.addListener((a) => {
-  if (a.name === "pruefen") pruefen();
+  if (a.name === "pruefen" || a.name === "pruefen-startup") {
+    pruefen();
+  } else if (a.name.startsWith("notif-clear-")) {
+    const id = a.name.slice("notif-clear-".length);
+    chrome.notifications.clear(id);
+  }
 });
 
 chrome.runtime.onMessage.addListener((n, absender, antwort) => {
   if (n.typ === "JETZT_PRUEFEN") { pruefen(true).then((b) => antwort(b)); return true; }
-  if (n.typ === "INTERVALL_GEAENDERT") { alarmSetzen().then(() => antwort({ ok: true })); return true; }
+  if (n.typ === "INTERVALL_GEAENDERT") { alarmSetzen(true).then(() => antwort({ ok: true })); return true; }
   if (n.typ === "GELESEN") { setze({ neu: [] }).then(badgeSetzen).then(() => antwort({ ok: true })); return true; }
+  if (n.typ === "BADGE_AKTUALISIEREN") { badgeSetzen().then(() => antwort({ ok: true })); return true; }
   if (n.typ === "ZURUECKSETZEN") {
     setze({ bekannt: [], neu: [], spitze: null, bestand: 0 }).then(badgeSetzen).then(() => antwort({ ok: true }));
     return true;
